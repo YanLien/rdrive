@@ -1,38 +1,34 @@
 #![no_std]
 
-#[cfg(feature = "alloc")]
 extern crate alloc;
+
+use alloc::string::String;
 
 #[macro_use]
 mod _macro;
 
 pub mod io;
-#[cfg(feature = "alloc")]
 pub mod lock;
 
-#[derive(Debug, Clone, Copy)]
-pub enum Error {
-    NoDev,
-    InvalidIo,
+#[derive(thiserror::Error, Debug, Clone, PartialEq, Eq)]
+pub enum ErrorBase {
+    #[error("IO error")]
+    Io,
+    #[error("No memory")]
+    NoMem,
+    #[error("Try Again")]
+    Again,
+    #[error("Busy")]
     Busy,
-    InvalidArgument,
-    NoMemory,
-    Timeout,
+    #[error("Bad Address: {0:#x}")]
+    BadAddr(usize),
+    #[error("Invalid Argument `{name}`: [{val}]")]
+    InvalidArg { name: &'static str, val: String },
 }
-
-impl core::fmt::Display for Error {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
-
-impl core::error::Error for Error {}
-
-pub type DriverResult<T = ()> = core::result::Result<T, Error>;
 
 pub trait DriverGeneric: Send {
-    fn open(&mut self) -> DriverResult;
-    fn close(&mut self) -> DriverResult;
+    fn open(&mut self) -> Result<(), ErrorBase>;
+    fn close(&mut self) -> Result<(), ErrorBase>;
 }
 
 custom_type!(IrqId, usize, "{:#x}");

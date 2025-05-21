@@ -2,12 +2,14 @@ use std::{error::Error, ptr::NonNull};
 
 use log::debug;
 use rdrive::{
-    Descriptor, DriverResult, HardwareKind,
+    Descriptor, ErrorBase, HardwareKind,
     intc::{IrqConfig, IrqId},
     register::{DriverRegister, Node, ProbeKind, ProbeLevel, ProbePriority},
 };
 
+pub mod clk;
 pub mod timer;
+pub mod uart;
 
 fn main() {
     env_logger::builder()
@@ -31,6 +33,8 @@ fn main() {
 
     rdrive::register_add(register);
     rdrive::register_add(timer::register());
+    rdrive::register_add(clk::register());
+    rdrive::register_add(uart::register());
 
     rdrive::probe_pre_kernel().unwrap();
 
@@ -47,11 +51,11 @@ fn main() {
 struct IrqTest {}
 
 impl rdrive::intc::DriverGeneric for IrqTest {
-    fn open(&mut self) -> DriverResult {
+    fn open(&mut self) -> Result<(), ErrorBase> {
         Ok(())
     }
 
-    fn close(&mut self) -> DriverResult {
+    fn close(&mut self) -> Result<(), ErrorBase> {
         Ok(())
     }
 }

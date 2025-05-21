@@ -2,7 +2,7 @@ use std::error::Error;
 
 use log::debug;
 use rdrive::{
-    Descriptor, ErrorBase, HardwareKind, get_dev,
+    Descriptor, ErrorBase, HardwareKind,
     register::{DriverRegister, Node, ProbeKind, ProbeLevel, ProbePriority},
     systick::*,
 };
@@ -11,22 +11,24 @@ struct Timer;
 
 pub fn register() -> DriverRegister {
     DriverRegister {
-        name: "TimerTest",
+        name: "PL011",
         probe_kinds: &[ProbeKind::Fdt {
-            compatibles: &["arm,pl031"],
+            compatibles: &["arm,pl011"],
             on_probe: probe,
         }],
-        level: ProbeLevel::PreKernel,
+        level: ProbeLevel::PostKernel,
         priority: ProbePriority::DEFAULT,
     }
 }
 
 fn probe(_node: Node<'_>, desc: &Descriptor) -> Result<HardwareKind, Box<dyn Error>> {
-    let parent = desc.irq_parent.unwrap();
+    debug!("{desc:?}");
 
-    let intc = get_dev!(parent, Intc).unwrap();
+    let clk = desc.get_clk_by_name("apb_pclk").unwrap();
 
-    debug!("intc : {}", intc.descriptor.name);
+    debug!("clk: {clk:?}");
+
+    let _dev = clk.get_dev().unwrap();
 
     Ok(HardwareKind::Systick(Box::new(Timer {})))
 }

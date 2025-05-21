@@ -56,6 +56,14 @@ pub struct LockWeak<T> {
     data: Weak<LockInner<T>>,
 }
 
+impl<T> Clone for LockWeak<T> {
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+        }
+    }
+}
+
 impl<T> LockWeak<T> {
     pub fn upgrade(&self) -> Option<Lock<T>> {
         self.data.upgrade().map(|data| Lock { data })
